@@ -1,12 +1,15 @@
+import { isObject } from "../utils"
 import { track, trigger } from "./effect"
-import { ReactiveFlags } from './reactive'
+import { reactive, ReactiveFlags, readonly } from './reactive'
 
 
 
 // 创建 getter ，普通的 getter 和 readonly 的 getter
 function createGetter(isReadonly = false) {
   return function (target, key) {
+
     const res = Reflect.get(target, key)
+
     // 触发 getter 时能够知道这个是一个 readonly 还是一个 observer
     if (key === ReactiveFlags.IS_REACTIVE) {
       return !isReadonly
@@ -17,6 +20,12 @@ function createGetter(isReadonly = false) {
       // 不是 readonly 就需要收集依赖
       track(target, key)
     }
+
+    // 解决嵌套问题
+    if (isObject(res)) {
+      return isReadonly ? readonly(res) : reactive(res)
+    }
+
     return res
   }
 }

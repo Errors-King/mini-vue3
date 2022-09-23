@@ -10,4 +10,18 @@ describe('reactive', () => {
     expect(isReactive(raw)).toBe(false)
     expect
   })
+
+  it('nested reactive', () => {
+    const raw = {
+      nested: {
+        age: 12
+      },
+      arr: [{name: 'rose'}]
+    }
+
+    const observed = reactive(raw)
+    expect(isReactive(observed.nested)).toBe(true)
+    expect(isReactive(observed.arr)).toBe(true)
+    expect(isReactive(observed.arr[0])).toBe(true)
+  })
 })
