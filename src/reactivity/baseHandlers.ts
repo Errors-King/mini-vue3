@@ -5,7 +5,7 @@ import { reactive, ReactiveFlags, readonly } from './reactive'
 
 
 // 创建 getter ，普通的 getter 和 readonly 的 getter
-function createGetter(isReadonly = false) {
+function createGetter(isReadonly = false, isShallowReadonly = false) {
   return function (target, key) {
 
     const res = Reflect.get(target, key)
@@ -16,6 +16,12 @@ function createGetter(isReadonly = false) {
     } else if (key === ReactiveFlags.IS_READONLY) {
       return isReadonly
     }
+
+    // 如果是 shallowReadonly 直接返回 res
+    if (isShallowReadonly) {
+      return res
+    }
+    
     if (!isReadonly) {
       // 不是 readonly 就需要收集依赖
       track(target, key)
@@ -43,6 +49,7 @@ function createSetter() {
 const set = createSetter()
 const get = createGetter()
 const readonlyGet = createGetter(true)
+const shallowReadonlyGet = createGetter(true, true)
 
 // 可变的 handler
 export const mutableHandlers = {
@@ -53,6 +60,14 @@ export const mutableHandlers = {
 // readonly 的 handler
 export const readonlyHandlers = {
   get: readonlyGet,
+  set(target, key, value) {
+    console.warn('raadonly 是不允许 set 的')
+    return true
+  }
+}
+
+export const shallowReadonlyHandlers = {
+  get: shallowReadonlyGet,
   set(target, key, value) {
     console.warn('raadonly 是不允许 set 的')
     return true

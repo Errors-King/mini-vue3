@@ -42,6 +42,10 @@ class ReactiveEffect {
 export function trigger(target, key) {
   const depsMap = targetMap.get(target)
   const dep = depsMap.get(key)
+  triggerEffects(dep)
+}
+
+export function triggerEffects (dep) {
   dep.forEach(cb =>{
     // 有 scheduler 就执行 scheduler
     if (cb.scheduler) {
@@ -72,6 +76,12 @@ export function track(target, key) {
     dep = new Set()
     depsMap.set(key, dep)
   }
+
+  trackEffects(dep)
+
+}
+
+export function trackEffects (dep) {
   // 如果 dep 中已经存在，就不用收集了
   if (dep.has(activeEffect)) return
   dep.add(activeEffect)
@@ -80,7 +90,7 @@ export function track(target, key) {
 }
 
 // 判断是否需要收集依赖
-function isTracking () {
+export function isTracking () {
   return shouldTrack && activeEffect !== undefined
 }
 
