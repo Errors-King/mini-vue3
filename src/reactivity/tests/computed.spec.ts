@@ -23,27 +23,23 @@ describe("computed", () => {
     });
     const cValue = computed(getter);
 
-    // lazy
+    // 不触发 get 不执行
     expect(getter).not.toHaveBeenCalled();
 
     expect(cValue.value).toBe(1);
     expect(getter).toHaveBeenCalledTimes(1);
 
-    // // should not compute again
+    // 依赖没变化的时候，不需要重新执行函数
     cValue.value;
     expect(getter).toHaveBeenCalledTimes(1);
 
-    // // should not compute until needed
-    // value.foo = 2;
-    // expect(getter).toHaveBeenCalledTimes(1);
+    // 依赖发生变化
+    value.foo = 2;
+    expect(getter).toHaveBeenCalledTimes(1);
 
-    // // now it should compute
-    // expect(cValue.value).toBe(2);
-    // expect(getter).toHaveBeenCalledTimes(2);
-
-    // // should not compute again
-    // cValue.value;
-    // expect(getter).toHaveBeenCalledTimes(2);
+    // 当触发 get 时，才会去执行
+    expect(cValue.value).toBe(2);
+    expect(getter).toHaveBeenCalledTimes(2);
   });
   
 })

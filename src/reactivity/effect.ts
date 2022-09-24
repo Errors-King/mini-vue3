@@ -3,7 +3,7 @@ let activeEffect // 当前正在执行的effect
 let shouldTrack // 判断是否需要收集依赖
 const targetMap = new Map() // 收集所有的 target
 
-class ReactiveEffect {
+export class ReactiveEffect {
   private _cb: any;
   deps = [];
   active = true
