@@ -1,3 +1,5 @@
+import { shallowReadonly } from "../reactivity/reactive"
+import { initProps } from "./componentProps"
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance"
 
 // 创建实例
@@ -5,14 +7,15 @@ export function createComponentInstance (vnode) {
   const component = {
     vnode,
     type: vnode.type,
-    setupState: {}
+    setupState: {},
+    props: {}
   }
   return component
 }
 
 // 构建组件
 export function setupComponent (instance) {
-  // initProps()
+  initProps(instance, instance.vnode.props)
   // initSlots()
 
   setupStatefulComponent(instance)
@@ -27,7 +30,8 @@ function setupStatefulComponent (instance) {
   const { setup } = Component
 
   if (setup) {
-    const setupRes = setup()
+    // 传入 props, 并且把 props 用 shallowReadonly 包裹，因为 props 是不允许修改的
+    const setupRes = setup(shallowReadonly(instance.props))
     handleSetupRes(instance, setupRes)
   }
 }

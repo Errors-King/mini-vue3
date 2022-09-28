@@ -1,3 +1,4 @@
+import { isObject } from "../utils/index"
 import { mutableHandlers, readonlyHandlers, shallowReadonlyHandlers } from "./baseHandlers"
 
 export const enum ReactiveFlags {
@@ -6,15 +7,15 @@ export const enum ReactiveFlags {
 }
 
 export function reactive(raw) {
-  return new Proxy(raw, mutableHandlers)
+  return createReactiveObject(raw, mutableHandlers)
 }
 
 export function readonly(raw) {
-  return new Proxy(raw, readonlyHandlers)
+  return createReactiveObject(raw, readonlyHandlers)
 }
 
 export function shallowReadonly (raw) {
-  return new Proxy(raw, shallowReadonlyHandlers)
+  return createReactiveObject(raw, shallowReadonlyHandlers)
 }
 
 export function isReactive(value) {
@@ -27,4 +28,12 @@ export function isReadonly(value) {
 
 export function isProxy (value) {
   return isReactive(value) || isReadonly(value)
+}
+
+function createReactiveObject(target, baseHandles) {
+  if (!isObject(target)) {
+    console.warn(`target ${target} 必须是对象`)
+    return
+  }
+  return new Proxy(target, baseHandles)
 }

@@ -1,4 +1,4 @@
-import { isObject } from "../utils"
+import { isObject } from "../utils/index"
 import { track, trigger } from "./effect"
 import { reactive, ReactiveFlags, readonly } from './reactive'
 
