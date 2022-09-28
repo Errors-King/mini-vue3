@@ -1,4 +1,5 @@
 import { isObject } from "../utils/index"
+import { ShapeFlags } from "../utils/shapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 
 export function render (vnode, container) {
@@ -8,9 +9,12 @@ export function render (vnode, container) {
 
 function patch (vnode, container) {
   // 判断 vnode 时 component 还是 element，并执行对应的处理逻辑
-  if (typeof vnode.type === 'string') {
+
+  // shapeFlags
+  const { shapeFlag } = vnode
+  if (shapeFlag & ShapeFlags.ELEMENT) {
     processElement(vnode, container)
-  } else if (isObject(vnode.type)) {
+  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPOMENT) {
     processComponent(vnode, container)
   }
 

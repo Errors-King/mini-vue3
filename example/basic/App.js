@@ -1,5 +1,6 @@
 import { h } from '../../lib/mini-vue.esm.js'
 window.self = null
+console.log(222222)
 export const App = {
 
 
