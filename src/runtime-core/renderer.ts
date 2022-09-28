@@ -1,4 +1,5 @@
-import { isObject } from "../utils/index"
+
+import { isOn } from "../utils/index"
 import { ShapeFlags } from "../utils/shapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 
@@ -41,7 +42,15 @@ function mountElement(vnode, container) {
   const { props } = vnode
   for (let key in props) {
     const value = props[key]
-    el.setAttribute(key, value)
+
+    // 判断是否是需要注册事件
+    if (isOn(key)) {
+      const event = key.slice(2).toLowerCase()
+      el.addEventListener(event, value)
+    } else {
+      el.setAttribute(key, value)
+    }
+
   }
 
   container.append(el)

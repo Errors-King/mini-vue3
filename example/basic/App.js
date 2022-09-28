@@ -7,7 +7,8 @@ export const App = {
   render() {
     window.self = this
     return h('div', {
-      class: ['parimiry', 'samlle']
+      class: ['parimiry', 'samlle'],
+      onClick: () => console.log('click')
     }, this.msg)
     // return h('div', {
     //   class: 'parent'
