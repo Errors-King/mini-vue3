@@ -2,7 +2,8 @@ import { hasOwn } from "../utils/index"
 
 // 获取 $ 相关的
 const publicPropertiesMap = {
-  $el: instance => instance.vnode.el
+  $el: instance => instance.vnode.el,
+  $slots: instance => instance.slots
 }
 
 // 代理对象拦截器
