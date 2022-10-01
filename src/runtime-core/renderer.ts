@@ -12,18 +12,44 @@ function patch (vnode, container) {
   // 判断 vnode 时 component 还是 element，并执行对应的处理逻辑
 
   // shapeFlags
-  const { shapeFlag } = vnode
-  if (shapeFlag & ShapeFlags.ELEMENT) {
-    processElement(vnode, container)
-  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPOMENT) {
-    processComponent(vnode, container)
+  const { shapeFlag, type } = vnode
+  switch (type) {
+    case 'Fragment':
+      processFragment(vnode, container)
+      break;
+  
+    default:
+      if (shapeFlag & ShapeFlags.ELEMENT) {
+        processElement(vnode, container)
+      } else if (shapeFlag & ShapeFlags.STATEFUL_COMPOMENT) {
+        processComponent(vnode, container)
+      }
+      break;
   }
 
   
 }
 
+// 处理 component
+function processComponent(vnode, container) {
+  mountComponent(vnode, container)
+}
+
 function processElement(vnode, container) {
   mountElement(vnode, container)
+}
+
+function processFragment(vnode: any, container: any) {
+  mountChildren(vnode.children, container)
+}
+
+
+// 挂载组件
+function mountComponent(initialVnode, container) {
+  // 创建实例
+  const instance = createComponentInstance(initialVnode) // {vnode: vnode, type: vnode.type}
+  setupComponent(instance)
+  setupRenderEffect(instance, initialVnode, container)
 }
 
 function mountElement(vnode, container) {
@@ -60,18 +86,6 @@ function mountChildren (children, container) {
   children.forEach(v => patch(v, container))
 }
 
-// 处理 component
-function processComponent(vnode, container) {
-  mountComponent(vnode, container)
-}
-
-// 挂载组件
-function mountComponent(initialVnode, container) {
-  // 创建实例
-  const instance = createComponentInstance(initialVnode) // {vnode: vnode, type: vnode.type}
-  setupComponent(instance)
-  setupRenderEffect(instance, initialVnode, container)
-}
 
 
 function setupRenderEffect(instance, initialVnode, container) {
@@ -84,3 +98,5 @@ function setupRenderEffect(instance, initialVnode, container) {
 
   initialVnode.el = subTree.el
 }
+
+
