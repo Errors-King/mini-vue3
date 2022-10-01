@@ -2,22 +2,25 @@
 import { isOn } from "../utils/index"
 import { ShapeFlags } from "../utils/shapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
+import { Fragment, Text } from "./createVNode"
 
-export function render (vnode, container) {
+export function render(vnode, container) {
   // 执行patch
   patch(vnode, container)
 }
 
-function patch (vnode, container) {
+function patch(vnode, container) {
   // 判断 vnode 时 component 还是 element，并执行对应的处理逻辑
 
   // shapeFlags
   const { shapeFlag, type } = vnode
   switch (type) {
-    case 'Fragment':
+    case Fragment:
       processFragment(vnode, container)
       break;
-  
+    case Text:
+      processText(vnode, container)
+      break;
     default:
       if (shapeFlag & ShapeFlags.ELEMENT) {
         processElement(vnode, container)
@@ -27,7 +30,7 @@ function patch (vnode, container) {
       break;
   }
 
-  
+
 }
 
 // 处理 component
@@ -43,6 +46,12 @@ function processFragment(vnode: any, container: any) {
   mountChildren(vnode.children, container)
 }
 
+function processText(vnode, container) {
+  const { children }  = vnode
+  const textNode = vnode.el = document.createTextNode(children)
+  container.append(textNode)
+}
+
 
 // 挂载组件
 function mountComponent(initialVnode, container) {
@@ -55,7 +64,7 @@ function mountComponent(initialVnode, container) {
 function mountElement(vnode, container) {
   const el = vnode.el = document.createElement(vnode.type)
 
-  const {children} = vnode
+  const { children } = vnode
 
   // 判断 childre 是否是数组
   if (typeof children === 'string') {
@@ -64,7 +73,7 @@ function mountElement(vnode, container) {
     // children.forEach(v => patch(v, el))
     mountChildren(children, el)
   }
-  
+
   const { props } = vnode
   for (let key in props) {
     const value = props[key]
@@ -82,7 +91,7 @@ function mountElement(vnode, container) {
   container.append(el)
 }
 
-function mountChildren (children, container) {
+function mountChildren(children, container) {
   children.forEach(v => patch(v, container))
 }
 
