@@ -4,6 +4,8 @@ import { initProps } from "./componentProps"
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance"
 import { initSlots } from "./componentSlots"
 
+let currentInstance = null // 当前实例
+
 // 创建实例
 export function createComponentInstance (vnode) {
   const component = {
@@ -35,10 +37,12 @@ function setupStatefulComponent (instance) {
   const { setup } = Component
 
   if (setup) {
+    setCurrentInstance(instance)
     // 传入 props, 并且把 props 用 shallowReadonly 包裹，因为 props 是不允许修改的
     const setupRes = setup(shallowReadonly(instance.props), {
       emit: instance.emit
     })
+    setCurrentInstance(null)
     handleSetupRes(instance, setupRes)
   }
 }
@@ -58,4 +62,12 @@ function finishComponentSetup(instance) {
   if (Component.render) {
     instance.render = Component.render
   }
+}
+
+export function getCurrentInstance () {
+  return currentInstance
+}
+
+export function setCurrentInstance (newInstance) {
+  currentInstance = newInstance
 }
