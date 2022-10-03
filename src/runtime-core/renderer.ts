@@ -45,7 +45,9 @@ export function createRenderer(options) {
     mountComponent(n2, container, parentComponent)
   }
 
+  // 处理元素
   function processElement(n1, n2, container, parentComponent) {
+    // 判断是更新还是挂载
     if (!n1) {
       mountElement(n2, container, parentComponent)
     } else {
@@ -53,10 +55,12 @@ export function createRenderer(options) {
     }
   }
 
+  // 处理 片段
   function processFragment(n1, n2: any, container: any, parentComponent) {
     mountChildren(n2.children, container, parentComponent)
   }
 
+  // 处理文本
   function processText(n1, n2, container) {
     const { children } = n2
     const textNode = n2.el = document.createTextNode(children)
@@ -72,6 +76,7 @@ export function createRenderer(options) {
     setupRenderEffect(instance, initialVnode, container)
   }
 
+  // 挂载元素
   function mountElement(vnode, container, parentComponent) {
     const el = vnode.el = hostCreateElement(vnode.type)
 
@@ -97,7 +102,7 @@ export function createRenderer(options) {
       //   el.setAttribute(key, value)
       // }
 
-      hostPatchProp(el, key, value)
+      hostPatchProp(el, key, null, value)
 
     }
 
@@ -105,14 +110,50 @@ export function createRenderer(options) {
     hostInsert(el, container)
   }
 
+  // 挂载子级
   function mountChildren(children, container, parentComponent) {
     children.forEach(v => patch(null, v, container, parentComponent))
   }
 
+  // 更新element流程
   function patchElement(n1, n2, container, parentComponent) {
     console.log('patchElement')
     console.log('n1', n1)
     console.log('n2', n2)
+
+    const oldProps = n1.props || EMPTY_OBJ
+    const newProps = n2.props || EMPTY_OBJ
+
+    const el = (n2.el = n1.el)
+
+    patchProps(el, oldProps, newProps)
+  }
+
+  const EMPTY_OBJ = {} // 初始化 props
+
+  // 更新 props
+  function patchProps(el, oldProps, newProps) {
+    // 只有当新旧 props 不一样才 进行 patch
+    if (oldProps !== newProps) {
+      for (let key in newProps) {
+        const preProp = oldProps[key]
+        const newProp = newProps[key]
+
+        if (preProp !== newProp) {
+          hostPatchProp(el, key, preProp, newProp)
+        }
+
+        // 貌似没必要 判断
+        if (oldProps !== EMPTY_OBJ) {
+          for (let key in oldProps) {
+            console.log(key, oldProps, newProp)
+            if (!(key in newProps)) {
+              hostPatchProp(el, key, oldProps[key], null)
+            }
+          }
+        }
+      }
+    }
   }
 
 

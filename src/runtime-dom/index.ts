@@ -8,12 +8,18 @@ function createElement(type) {
 
 }
 
-function patchProp(el, key, value) {
+function patchProp(el, key, preVal, nextVal) {
   if (isOn(key)) {
     const event = key.slice(2).toLowerCase()
-    el.addEventListener(event, value)
+    el.addEventListener(event, nextVal)
   } else {
-    el.setAttribute(key, value)
+    // 当新的值是 null | undefined, 就删除
+    if (nextVal == null) {
+      el.removeAttribute(key)
+    } else {
+      el.setAttribute(key, nextVal)
+    }
+   
   }
 }
 
