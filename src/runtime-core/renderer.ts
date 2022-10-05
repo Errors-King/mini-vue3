@@ -9,7 +9,13 @@ import { Fragment, Text } from "./createVNode"
 
 export function createRenderer(options) {
 
-  const { createElement: hostCreateElement, patchProp: hostPatchProp, insert: hostInsert } = options
+  const {
+    createElement: hostCreateElement,
+    patchProp: hostPatchProp,
+    insert: hostInsert,
+    remove: hostRemove,
+    setElementText: hostSetElementText
+  } = options
 
   function render(vnode, container) {
     // 执行patch
@@ -126,6 +132,7 @@ export function createRenderer(options) {
 
     const el = (n2.el = n1.el)
 
+    patchChildren(n1, n2, el, parentComponent)
     patchProps(el, oldProps, newProps)
   }
 
@@ -153,6 +160,41 @@ export function createRenderer(options) {
           }
         }
       }
+    }
+  }
+
+  function patchChildren(n1, n2, container, parentComponent) {
+
+    const preShapeFlag = n1.shapeFlag
+    const c1 = n1.children
+    const { shapeFlag } = n2
+    const c2 = n2.children
+
+    // Array2Text
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      if (preShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 移除所有 child
+        unmountChildren(n1.children)
+
+      }
+      // 设置新的 textChild (Text2Text)
+      if (c1 !== c2) {
+        hostSetElementText(container, c2)
+      }
+    } else {
+      // Text2Array
+      if (preShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+        // 清空文本
+        hostSetElementText(container, '')
+        mountChildren(c2, container, parentComponent)
+      }
+    }
+  }
+
+  function unmountChildren(children) {
+    for (let i = 0; i < children.length; i++) {
+      const el = children[i].el
+      hostRemove(el)
     }
   }
 

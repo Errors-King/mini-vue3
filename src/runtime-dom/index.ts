@@ -8,6 +8,8 @@ function createElement(type) {
 
 }
 
+
+// 设置 props
 function patchProp(el, key, preVal, nextVal) {
   if (isOn(key)) {
     const event = key.slice(2).toLowerCase()
@@ -23,14 +25,31 @@ function patchProp(el, key, preVal, nextVal) {
   }
 }
 
+// 插入元素
 function insert(el, container) {
   container.append(el)
+}
+
+// 移除元素
+function remove (child) {
+  // 获取要删除元素的父级
+  const parent = child.parentNode
+  if (parent) {
+    parent.removeChild(child)
+  }
+}
+
+// 设置文本元素
+function setElementText (container, text) {
+  container.textContent = text
 }
 
 const renderer: any = createRenderer({
   createElement,
   patchProp,
-  insert
+  insert,
+  remove,
+  setElementText
 })
 
 export function createApp(...args) {
