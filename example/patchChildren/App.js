@@ -15,7 +15,8 @@ export default {
       h('p', {}, '首页'),
       // h(Array2Text),
       // h(Text2Text),
-      h(Text2Array)
+      // h(Text2Array),
+      h(Array2Array)
     ])
   }
 }
