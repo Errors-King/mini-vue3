@@ -1,4 +1,5 @@
 
+import expect_2 from "expect"
 import { effect } from "../reactivity/effect"
 import { isOn } from "../utils/index"
 import { ShapeFlags } from "../utils/shapeFlags"
@@ -252,6 +253,46 @@ export function createRenderer(options) {
     } else {
       // 中间部分是乱序
 
+      let s1 = i
+      let s2 = i
+      let patched = 0
+
+      // 保存映射
+      const keyToNewIndexMap = new Map()
+
+      for(let i = s2; i <= e2; i++) {
+        const nextChild = c2[i]
+
+        keyToNewIndexMap.set(nextChild.key, i)
+      }
+
+      // 查找复用
+      for (let i = s1; i <= e1; i++) {
+        let preChild = c1[i]
+
+        if (patched >= (e2 - s2 + 1)) {
+          hostRemove(preChild.el)
+        }
+        let newIndex
+        if (preChild.key != null) {
+          newIndex = keyToNewIndexMap.get(preChild.key)
+        } else {
+          for (let j = s2; j < e2; j++) {
+            if (isSomeVNodeType(preChild, c2[j])) {
+              newIndex = j
+              break
+            }
+          }
+        }
+
+        if (newIndex === undefined) {
+          hostRemove(preChild.el)
+        } else {
+          patch(preChild, c2[newIndex], container, parentComponent, null)
+          patched++
+        }
+
+      }
     }
   }
 
