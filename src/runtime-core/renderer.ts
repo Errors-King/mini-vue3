@@ -1,7 +1,5 @@
 
-import expect_2 from "expect"
 import { effect } from "../reactivity/effect"
-import { isOn } from "../utils/index"
 import { ShapeFlags } from "../utils/shapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 import { createAppAPI } from "./createApp"
@@ -200,7 +198,7 @@ export function createRenderer(options) {
     let i = 0
     let e1 = c1.length - 1
     let e2 = l2 - 1
-    
+
     // 判断是否是相同的节点
     function isSomeVNodeType(n1, n2) {
       return n1.type === n2.type && n1.key === n2.key
@@ -237,7 +235,7 @@ export function createRenderer(options) {
 
     // 新的比老的多
     if (i > e1) {
-      if(i <= e2) {
+      if (i <= e2) {
         const nextPos = e2 + 1
         const anchor = (nextPos < l2) ? c2[nextPos].el : null
         while (i <= e2) {
@@ -256,11 +254,22 @@ export function createRenderer(options) {
       let s1 = i
       let s2 = i
       let patched = 0
+      const toBePatched = e2 - s2 + 1
 
       // 保存映射
       const keyToNewIndexMap = new Map()
+      const newIndexToOldIndexMap = new Array(toBePatched)
 
-      for(let i = s2; i <= e2; i++) {
+      // 优化点
+      let moved = false
+      let maxNewINdexSoFar = 0
+
+      for (let i = 0; i <= e1; i++) {
+        newIndexToOldIndexMap[i] = 0
+      }
+
+
+      for (let i = s2; i <= e2; i++) {
         const nextChild = c2[i]
 
         keyToNewIndexMap.set(nextChild.key, i)
@@ -270,7 +279,7 @@ export function createRenderer(options) {
       for (let i = s1; i <= e1; i++) {
         let preChild = c1[i]
 
-        if (patched >= (e2 - s2 + 1)) {
+        if (patched >= toBePatched) {
           hostRemove(preChild.el)
         }
         let newIndex
@@ -288,8 +297,41 @@ export function createRenderer(options) {
         if (newIndex === undefined) {
           hostRemove(preChild.el)
         } else {
+
+          if (newIndex >= maxNewINdexSoFar) {
+            maxNewINdexSoFar = newIndex
+          } else {
+            moved = true
+          }
+
+          newIndexToOldIndexMap[newIndex - s2] = i + 1
           patch(preChild, c2[newIndex], container, parentComponent, null)
           patched++
+        }
+
+      }
+
+      // 获取最长递增自子序列
+      const increasingNewSequence = moved ? getSequence(newIndexToOldIndexMap) : []
+      let j = increasingNewSequence.length - 1
+
+      for (let i = toBePatched - 1; i >= 0; i--) {
+
+        const nextIndex = i + s2
+        const nextChild = c2[nextIndex]
+        const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1].el : null
+
+        if (newIndexToOldIndexMap[i] === 0) {
+          // 新创建节点
+          patch(null, nextChild, container, parentComponent, anchor)
+        } else if (moved) {
+          // 移动节点逻辑
+          if (j < 0 || i !== increasingNewSequence[j]) {
+            console.log('移动')
+            hostInsert(nextChild.el, container, anchor)
+          } else {
+            j--
+          }
         }
 
       }
@@ -345,5 +387,46 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render)
   }
+}
+
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice();
+  const result = [0];
+  let i, j, u, v, c;
+  const len = arr.length;
+  for (i = 0; i < len; i++) {
+    const arrI = arr[i];
+    if (arrI !== 0) {
+      j = result[result.length - 1];
+      if (arr[j] < arrI) {
+        p[i] = j;
+        result.push(i);
+        continue;
+      }
+      u = 0;
+      v = result.length - 1;
+      while (u < v) {
+        c = (u + v) >> 1;
+        if (arr[result[c]] < arrI) {
+          u = c + 1;
+        } else {
+          v = c;
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1];
+        }
+        result[u] = i;
+      }
+    }
+  }
+  u = result.length;
+  v = result[u - 1];
+  while (u-- > 0) {
+    result[u] = v;
+    v = p[v];
+  }
+  return result;
 }
 
