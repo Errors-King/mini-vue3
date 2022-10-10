@@ -5,6 +5,7 @@ import { ShapeFlags } from "../utils/shapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 import { createAppAPI } from "./createApp"
 import { Fragment, Text } from "./createVNode"
+import { queueJobs } from "./scheduler"
 
 
 export function createRenderer(options) {
@@ -406,6 +407,10 @@ export function createRenderer(options) {
 
         // initialVnode.el = subTree.el
 
+      }
+    }, {
+      scheduler() {
+        queueJobs(instance.update)
       }
     })
   }
