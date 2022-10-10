@@ -1,4 +1,5 @@
 
+import { shouldUpdateComponent } from "../reactivity/componentUpdateUtils"
 import { effect } from "../reactivity/effect"
 import { ShapeFlags } from "../utils/shapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
@@ -47,7 +48,26 @@ export function createRenderer(options) {
 
   // 处理 component
   function processComponent(n1, n2, container, parentComponent, anchor) {
-    mountComponent(n2, container, parentComponent, anchor)
+    if (!n1) {
+      // 组件挂载
+      mountComponent(n2, container, parentComponent, anchor)
+    } else {
+      // 组件更新
+      updateComponent(n1, n2)
+    }
+
+  }
+
+  function updateComponent(n1, n2) {
+    const instance = n2.component = n1.component
+
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2
+      instance.update()
+    } else {
+      n2.el = n1.el
+      instance.vnode = n2
+    }
   }
 
   // 处理元素
@@ -76,7 +96,7 @@ export function createRenderer(options) {
   // 挂载组件
   function mountComponent(initialVnode, container, parentComponent, anchor) {
     // 创建实例
-    const instance = createComponentInstance(initialVnode, parentComponent) // {vnode: vnode, type: vnode.type}
+    const instance = initialVnode.component = createComponentInstance(initialVnode, parentComponent) // {vnode: vnode, type: vnode.type}
     setupComponent(instance)
     setupRenderEffect(instance, initialVnode, container, anchor)
   }
@@ -348,7 +368,7 @@ export function createRenderer(options) {
 
   function setupRenderEffect(instance, initialVnode, container, anchor) {
     // rend 的时候绑定代理对象
-    effect(() => {
+    instance.update = effect(() => {
 
       // mount
       if (!instance.isMounted) {
@@ -365,6 +385,12 @@ export function createRenderer(options) {
       } else {
         // update
         console.log('update')
+
+        const { next, vnode } = instance
+        if (next) {
+          next.el = vnode.el
+          updateComponentProRender(instance, next)
+        }
         const { proxy } = instance
 
         const subTree = instance.render.call(proxy)
@@ -387,6 +413,12 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render)
   }
+}
+
+function updateComponentProRender(instance, nextVNode) {
+  instance.vnode = nextVNode
+  instance.props = nextVNode.props
+  instance.next = null
 }
 
 function getSequence(arr: number[]): number[] {
