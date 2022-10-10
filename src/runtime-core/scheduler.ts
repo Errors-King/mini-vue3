@@ -1,22 +1,30 @@
 
-const queue:any[] = []
+const queue: any[] = []
 let isFlushPedding = false
+let p = Promise.resolve()
 
-export function queueJobs (job) {
+export function nextTick(fn) {
+  return fn ? p.then(fn) : p
+}
+
+
+export function queueJobs(job) {
   if (!queue.includes(job)) {
     queue.push(job)
   }
   queueFlush()
 }
 
-function queueFlush () {
-  if (isFlushPedding) return 
+function queueFlush() {
+  if (isFlushPedding) return
   isFlushPedding = true
-  Promise.resolve().then(() => {
-    isFlushPedding = false
-    let job
-    while ((job = queue.shift())) {
-      job && job()
-    }
-  })
+  nextTick(flushJobs)
+}
+
+function flushJobs() {
+  isFlushPedding = false
+  let job
+  while ((job = queue.shift())) {
+    job && job()
+  }
 }
