@@ -8,6 +8,24 @@ export function baseParse(content) {
 
 }
 
+// 创建上下文
+function createParserContext(content) {
+  return {
+    source: content
+  }
+}
+
+// 移动
+function advanceBy(context, length) {
+  context.source = context.source.slice(length)
+}
+
+// 创建根对象
+function createRoot(children) {
+  return {
+    children
+  }
+}
 
 // 解析 children
 function parseChildren(context) {
@@ -25,9 +43,23 @@ function parseChildren(context) {
     }
   }
 
+  if (!node) {
+    node = parseText(context)
+  }
+
 
   nodes.push(node)
   return nodes
+}
+
+// 解析 text
+function parseText(context) {
+  const content = context.source.slice(0, context.source.length)
+  advanceBy(context, context.source.length)
+  return {
+    type: NodeTypes.TEXT,
+    content: content
+  }
 }
 
 // 解析 element
@@ -44,6 +76,7 @@ function parseElement(context) {
 
 }
 
+// 处理 tag
 function parseTag(context: any, type: TagType) {
   const match: any = /^<\/?([a-z]*)/i.exec(context.source)
 
@@ -91,21 +124,4 @@ function parseInterpolation(context) {
 
 }
 
-// 移动
-function advanceBy(context, length) {
-  context.source = context.source.slice(length)
-}
 
-// 创建根对象
-function createRoot(children) {
-  return {
-    children
-  }
-}
-
-// 创建上下文
-function createParserContext(content) {
-  return {
-    source: content
-  }
-}
