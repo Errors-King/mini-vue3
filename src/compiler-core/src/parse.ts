@@ -8,6 +8,8 @@ export function baseParse(content) {
 
 }
 
+
+// 解析 children
 function parseChildren(context) {
 
   const nodes: any = []
@@ -22,6 +24,7 @@ function parseChildren(context) {
   return nodes
 }
 
+// 解析 插值
 function parseInterpolation(context) {
 
   const openDelimiter = "{{"
@@ -52,16 +55,19 @@ function parseInterpolation(context) {
 
 }
 
+// 移动
 function advanceBy(context, length) {
   context.source = context.source.slice(length)
 }
 
+// 创建根对象
 function createRoot(children) {
   return {
     children
   }
 }
 
+// 创建上下文
 function createParserContext(content) {
   return {
     source: content
