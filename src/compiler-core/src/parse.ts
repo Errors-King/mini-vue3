@@ -4,7 +4,7 @@ export function baseParse(content) {
 
   const context = createParserContext(content)
 
-  return createRoot(parseChildren(context))
+  return createRoot(parseChildren(context, ''))
 
 }
 
@@ -28,34 +28,58 @@ function createRoot(children) {
 }
 
 // 解析 children
-function parseChildren(context) {
+function parseChildren(context, parentTag) {
 
   const nodes: any = []
 
-  let node
-  const s = context.source
-  if (s.startsWith("{{")) {
-    node = parseInterpolation(context)
-  } else if (s[0] === '<') {
-    if (/[a-z]/i.test(s[1])) {
-      console.log('parse element')
-      node = parseElement(context)
+  while (!isEnd(context, parentTag)) {
+    let node
+    const s = context.source
+    if (s.startsWith("{{")) {
+      console.log('interpolation')
+      node = parseInterpolation(context)
+    } else if (s[0] === '<') {
+      if (/[a-z]/i.test(s[1])) {
+        console.log('parse element')
+        node = parseElement(context)
+      }
     }
+
+    if (!node) {
+      console.log('text')
+      node = parseText(context)
+    }
+
+    nodes.push(node)
   }
 
-  if (!node) {
-    node = parseText(context)
-  }
-
-
-  nodes.push(node)
   return nodes
+}
+
+function isEnd (context, parentTag) {
+  const s = context.source
+
+  if (parentTag && s.startsWith(`</${parentTag}>`)) {
+    return true
+  }
+
+  return !s
 }
 
 // 解析 text
 function parseText(context) {
-  const content = context.source.slice(0, context.source.length)
-  advanceBy(context, context.source.length)
+
+  // 判断是否存在插值表达式
+  let endIndex = context.source.length
+  let endToken = "{{"
+
+  const index = context.source.indexOf(endToken)
+  if (index !== -1) {
+    endIndex = index
+  }
+
+  const content = context.source.slice(0, endIndex)
+  advanceBy(context, endIndex)
   return {
     type: NodeTypes.TEXT,
     content: content
@@ -68,7 +92,8 @@ function parseElement(context) {
   // 1 解析
   // 2 删除
 
-  const element = parseTag(context, TagType.Start)
+  const element: any = parseTag(context, TagType.Start)
+  element.children = parseChildren(context, element.tag)
 
   parseTag(context, TagType.End)
 
