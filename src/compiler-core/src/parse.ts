@@ -4,7 +4,7 @@ export function baseParse(content) {
 
   const context = createParserContext(content)
 
-  return createRoot(parseChildren(context, ''))
+  return createRoot(parseChildren(context, []))
 
 }
 
@@ -28,11 +28,13 @@ function createRoot(children) {
 }
 
 // 解析 children
-function parseChildren(context, parentTag) {
+function parseChildren(context, ancestors) {
 
   const nodes: any = []
 
-  while (!isEnd(context, parentTag)) {
+  // 循环解析 children
+  while (!isEnd(context, ancestors)) {
+    console.log('----------', context.source)
     let node
     const s = context.source
     if (s.startsWith("{{")) {
@@ -41,7 +43,7 @@ function parseChildren(context, parentTag) {
     } else if (s[0] === '<') {
       if (/[a-z]/i.test(s[1])) {
         console.log('parse element')
-        node = parseElement(context)
+        node = parseElement(context, ancestors)
       }
     }
 
@@ -56,11 +58,21 @@ function parseChildren(context, parentTag) {
   return nodes
 }
 
-function isEnd (context, parentTag) {
+function isEnd(context, ancestors) {
+  // console.log('==========', parentTag)
   const s = context.source
 
-  if (parentTag && s.startsWith(`</${parentTag}>`)) {
-    return true
+  // if (parentTag && s.startsWith(`</${parentTag}>`)) {
+  //   return true
+  // }
+
+  if (s.startsWith('</')) {
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const tag = ancestors[i].tag
+      if (s.slice(2, 2 + tag.length) === tag) {
+        return true
+      }
+    }
   }
 
   return !s
@@ -71,12 +83,16 @@ function parseText(context) {
 
   // 判断是否存在插值表达式
   let endIndex = context.source.length
-  let endToken = "{{"
+  let endTokens = ["<", "{{"]
 
-  const index = context.source.indexOf(endToken)
-  if (index !== -1) {
-    endIndex = index
+  for (let i = 0; i < endTokens.length; i++) {
+    const index = context.source.indexOf(endTokens[i])
+    if (index !== -1 && endIndex > index) {
+      endIndex = index
+    }
   }
+
+
 
   const content = context.source.slice(0, endIndex)
   advanceBy(context, endIndex)
@@ -87,15 +103,22 @@ function parseText(context) {
 }
 
 // 解析 element
-function parseElement(context) {
+function parseElement(context, ancestors) {
 
   // 1 解析
   // 2 删除
 
   const element: any = parseTag(context, TagType.Start)
-  element.children = parseChildren(context, element.tag)
+  ancestors.push(element)
+  element.children = parseChildren(context, ancestors)
+  ancestors.pop()
 
-  parseTag(context, TagType.End)
+  if (element.tag === context.source.slice(2, 2 + element.tag.length)) {
+    parseTag(context, TagType.End)
+  } else {
+    throw new Error('缺少结束标签')
+  }
+ 
 
   return element
 
