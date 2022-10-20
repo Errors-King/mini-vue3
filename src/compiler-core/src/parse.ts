@@ -23,7 +23,8 @@ function advanceBy(context, length) {
 // 创建根对象
 function createRoot(children) {
   return {
-    children
+    children,
+    type: NodeTypes.ROOT
   }
 }
 

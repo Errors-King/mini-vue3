@@ -3,7 +3,8 @@ export const enum NodeTypes {
   INTERPOLATION,
   SIMEPLE_EXPRESSION,
   ElEMENT,
-  TEXT
+  TEXT,
+  ROOT
 }
 
 export const enum TagType {
